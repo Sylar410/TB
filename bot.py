@@ -13,14 +13,15 @@ async def downloader(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     url = update.message.text.strip()
 
-    # Fix YouTube Shorts
+    # Fix YouTube Shorts URLs
     if "youtube.com/shorts/" in url:
         url = url.replace("youtube.com/shorts/", "youtube.com/watch?v=")
 
     await update.message.reply_text("⬇️ Downloading...")
 
     ydl_opts = {
-        "format": "best[ext=mp4]/best",
+        "format": "bv*+ba/best",
+        "merge_output_format": "mp4",
         "outtmpl": "video.%(ext)s",
         "noplaylist": True,
         "quiet": True,
@@ -35,13 +36,13 @@ async def downloader(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            file = ydl.prepare_filename(info)
+            filename = ydl.prepare_filename(info)
 
-        await update.message.reply_video(video=open(file, "rb"))
-        os.remove(file)
+        await update.message.reply_video(video=open(filename, "rb"))
+        os.remove(filename)
 
     except Exception as e:
-        await update.message.reply_text("❌ Download failed")
+        await update.message.reply_text("❌ Download failed (unsupported or restricted video)")
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, downloader))
