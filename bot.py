@@ -15,12 +15,20 @@ async def downloader(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     url = update.message.text.strip()
+
+    # Fix YouTube Shorts links
+    if "youtube.com/shorts/" in url:
+        url = url.replace("youtube.com/shorts/", "youtube.com/watch?v=")
+
     await update.message.reply_text("⬇️ Downloading video...")
 
     ydl_opts = {
-        'format': 'bestvideo+bestaudio/best',
-        'merge_output_format': 'mp4',
-        'outtmpl': 'video.%(ext)s'
+        "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]",
+        "merge_output_format": "mp4",
+        "outtmpl": "video.%(ext)s",
+        "noplaylist": True,
+        "quiet": True,
+        "geo_bypass": True
     }
 
     try:
@@ -31,7 +39,7 @@ async def downloader(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_video(video=open(filename, 'rb'))
         os.remove(filename)
 
-    except Exception as e:
+    except Exception:
         await update.message.reply_text("❌ Failed to download video or unsupported link.")
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
